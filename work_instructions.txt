@@ -1,0 +1,187 @@
+https://docs.splunk.com/Documentation/Splunk/8.2.0/AdvancedDev/ModAlertsIntro
+
+
+
+Splunk App directory structure 
+==============================
+
++++++++++++++++++++++++++++++++++++++++++++++++++
+appserver
+    >static
+    >[app_icon].png (One or more icon image file)
+            
++++++++++++++++++++++++++++++++++++++++++++++++++
+
+bin [folder]
+## store all the .py files (Logic)
+++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+default [folder]
+    
+>alert_actions.conf (Alert action configuration)
+>app.conf (Defines app package and UI information )
+>restmap.conf (Defines validation for parameters declared in savedsearches.conf)
+>setup.xml (Defines a UI for populating global settings at setup time )
+    >data [folder]
+        >ui [folder]
+            >alerts [folder]
+            >custom_alert_action].html (User interface file)
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+metadata [folder]
+>default.meta (Defines alert action permission and scope )
+
+README [foder]
+>alert_actions.conf.spec (Declares alert action parameters)
+>savedsearches.conf.spec (Declares alert action parameters configured in the local savedsearches.conf file for the Splunk platform instance)
+
+
+
+
+------------------------
+-- alert_actions.conf --
+------------------------
+[tmdb]
+is_custom = 1
+label = <Display name of the alert action in the Splunk Enterprise UI>
+description = add to TMD list details 
+icon_path = splunk.png
+payload_format = json OR xml
+
+
+--------------------------------------------------
+-- savedsearches.conf / savedsearches.conf.spec --
+--------------------------------------------------
+action.tmdb.param.listid = <string>
+action.tmdb.param.listlang = <string>
+action.tmdb.param.APIKey = <string>
+
+------------------
+-- default.meta --
+------------------
+use default.meta to define permissions and scope for alert actions. Typically you want to export the alert action globally. 
+
+following stanza is required if you are using the app for custom alert action 
+
+[alert_actions]
+export = system
+
+[alerts]
+export = system
+
+[restmap]
+export = system
+
+
+root@splunk:/opt/splunk/etc/apps/tmdb_alert# tree
+.
+├── appserver
+│   └── static
+│       └── splunk.png
+├── bin
+│   ├── README
+│   ├── tmdb.py
+│   └── tmdb.py1
+├── default
+│   ├── alert_actions.conf
+│   ├── app.conf
+│   └── data
+│       └── ui
+│           ├── alerts
+│           │   └── tmdb.html
+│           ├── nav
+│           │   └── default.xml
+│           └── views
+│               └── README
+├── local
+│   └── app.conf
+├── metadata
+│   ├── default.meta
+│   └── local.meta
+└── README
+    └── savedsearches.conf.spec
+
+12 directories, 13 files
+
+
+
+
+++++++++++++++
+++ payload +++
+++++++++++++++
+
+
+When the custom alert action script runs, it reads in payload information about the system and the alert. The payload includes alert action configurations merged from alert_actions.conf and savedsearches.conf
+
+notes : json "configuration" -> to get the custom alert action values 
+notes : json "result" -> to get the results from the search output
+
+
+
+
++++++++++++++++++++
+++ python coding ++
++++++++++++++++++++
+
+location -> $SPLUNK_HOME$/etc/apps/[myapp]/bin/ 
+
+The script runs separately for each triggered alert. It should have a brief execution time and terminate once the alert action execution completes. The script is forcefully terminated if the runtime exceeds its runtime threshold. The default runtime threshold is 5 minutes. 
+
+The name of the script should be the same as in its alert_actions.conf stanza. You can add an optional file name extension. For example, myapp/bin/myalertaction.py corresponds to [myalertaction] in alert_actions.conf. 
+
+
+
+ the script's workflow looks like this:
+
+* Check the execution mode, based on command line arguments.
+* Read configuration payload from stdin.
+* Run the alert action.
+* Terminate.
+
+
+Recognized file types
+*Nix platforms
+
+    filename.sh
+    filename.py
+    filename.js
+    filename (executable file without an extension)
+
+Windows platforms
+
+    filename.bat
+    filename.cmd
+    filename.py
+    filename.js
+    filename.exe
+
+
+
+When the alert action is triggered, the script receives one command line argument, which is the string --execute. This argument indicates the execution mode. Your script should check for the --execute argument. 
+
+stage-1
+
+The alert_actions.conf file and savedsearches.conf file define the content of the configuration payload. Upon startup, the script reads the configuration from the payload. 
+
+Developers typically create the configuration files before writing the script because of this dependency. The configuration file format is usually XML, but can be JSON if specified in alert_actions.conf. 
+
+
+The configuration payload contains:
+
+    >Global information about the system
+    * splunkd session key
+    * splunkd management URL
+
+    >Information about the triggered alert and search
+    * SID
+    * Saved search name
+    * Path to file containing the search results
+    * URL to the search results
+
+    >Alert action configuration
+    * This configuration contains the merged parameters of alert_actions.conf and savedsearches.conf.
+
+    >The first search result
+
+
+
+
