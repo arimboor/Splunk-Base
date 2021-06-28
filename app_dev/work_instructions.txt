@@ -67,45 +67,12 @@ default.meta (Defines alert action permission and scope )
 
 
 
-
-------------------------
--- alert_actions.conf --
-------------------------
-[tmdb]
-is_custom = 1
-label = <Display name of the alert action in the Splunk Enterprise UI>
-description = add to TMD list details 
-icon_path = splunk.png
-payload_format = json OR xml
-
-
 --------------------------------------------------
 -- savedsearches.conf / savedsearches.conf.spec --
 --------------------------------------------------
 action.tmdb.param.listid = <string>
 action.tmdb.param.listlang = <string>
 action.tmdb.param.APIKey = <string>
-
-------------------
--- default.meta --
-------------------
-use default.meta to define permissions and scope for alert actions. Typically you want to export the alert action globally. 
-
-following stanza is required if you are using the app for custom alert action 
-
-[alert_actions]
-export = system
-
-[alerts]
-export = system
-
-[restmap]
-export = system
-
-
-
-
-
 
 
 ++++++++++++++
