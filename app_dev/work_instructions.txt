@@ -1,36 +1,67 @@
-https://docs.splunk.com/Documentation/Splunk/8.2.0/AdvancedDev/ModAlertsIntro
+
+# Splunk App directory structure 
+
+root@splunk:/opt/splunk/etc/apps/tmdb_alert# tree
+.
+├── appserver
+│   └── static
+│       └── mysoc.png
+├── bin
+│   ├── README
+│   ├── mysoc.py
+│   
+├── default
+│   ├── alert_actions.conf
+│   ├── app.conf
+│   └── data
+│       └── ui
+│           ├── alerts
+│           │   └── mysoc.html
+│           ├── nav
+│           │   └── default.xml
+│           └── views
+│               └── README
+├── local
+│   └── app.conf
+├── metadata
+│   ├── default.meta
+│   └── local.meta
+└── README
+    └── savedsearches.conf.spec
+
+12 directories, 13 files
 
 
 
-Splunk App directory structure 
-==============================
-
-+++++++++++++++++++++++++++++++++++++++++++++++++
-appserver
-    >static
+## appserver [folder]
+    >static [folder]
     >[app_icon].png (One or more icon image file)
             
-+++++++++++++++++++++++++++++++++++++++++++++++++
 
-bin [folder]
-## store all the .py files (Logic)
-++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-default [folder]
+##  bin [folder]
+store all the .py files (Logic)
+
+## lib [folder]
+store all the python dependencies 
+
+## default [folder]
     
->alert_actions.conf (Alert action configuration)
->app.conf (Defines app package and UI information )
->restmap.conf (Defines validation for parameters declared in savedsearches.conf)
->setup.xml (Defines a UI for populating global settings at setup time )
-    >data [folder]
-        >ui [folder]
-            >alerts [folder]
-            >custom_alert_action].html (User interface file)
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-metadata [folder]
->default.meta (Defines alert action permission and scope )
+alert_actions.conf (Alert action configuration)
+app.conf (Defines app package and UI information )
+restmap.conf (Defines validation for parameters declared in savedsearches.conf)
+setup.xml (Defines a UI for populating global settings at setup time )
 
-README [foder]
+    data [folder]
+        ui [folder]
+            alerts [folder]
+                custom_alert_action].html (User interface file)
+
+
+## metadata [folder]
+default.meta (Defines alert action permission and scope )
+
+## README [foder]
 >alert_actions.conf.spec (Declares alert action parameters)
 >savedsearches.conf.spec (Declares alert action parameters configured in the local savedsearches.conf file for the Splunk platform instance)
 
@@ -72,35 +103,7 @@ export = system
 export = system
 
 
-root@splunk:/opt/splunk/etc/apps/tmdb_alert# tree
-.
-├── appserver
-│   └── static
-│       └── splunk.png
-├── bin
-│   ├── README
-│   ├── tmdb.py
-│   └── tmdb.py1
-├── default
-│   ├── alert_actions.conf
-│   ├── app.conf
-│   └── data
-│       └── ui
-│           ├── alerts
-│           │   └── tmdb.html
-│           ├── nav
-│           │   └── default.xml
-│           └── views
-│               └── README
-├── local
-│   └── app.conf
-├── metadata
-│   ├── default.meta
-│   └── local.meta
-└── README
-    └── savedsearches.conf.spec
 
-12 directories, 13 files
 
 
 
@@ -184,4 +187,7 @@ The configuration payload contains:
 
 
 
+## references 
+
+https://docs.splunk.com/Documentation/Splunk/8.2.0/AdvancedDev/ModAlertsIntro
 
