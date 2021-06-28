@@ -1,0 +1,12 @@
+use default.meta to define permissions and scope for alert actions. Typically you want to export the alert action globally. 
+
+following stanza is required if you are using the app for custom alert action 
+
+[alert_actions]
+export = system
+
+[alerts]
+export = system
+
+[restmap]
+export = system
