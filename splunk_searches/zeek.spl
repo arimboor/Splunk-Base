@@ -1,0 +1,191 @@
+# all connection
+
+index=bro2 sourcetype=bro_conn id_resp_p IN (443,80) id_orig_h="$dest_host$"
+| eval Time=strftime(_time, "%d/%m/%Y %H:%M:%S") 
+| iplocation id_resp_h 
+| join id_resp_h 
+    [ search index=bro_ssl sourcetype=bro_ssl 
+    | table id_resp_h server_name ] 
+| eval receive_mb = round((resp_bytes/1024)/1024,3) , send_mb = round((orig_bytes/1024)/1024,3) 
+| table Time  id_resp_h server_name Country id_resp_p receive_mb send_mb
+
+
+
+# active hrs
+index="bro2" sourcetype=bro_conn id_orig_h ="$dest_host$" NOT id_resp_h IN(10.0.0.0/24) earliest=-01d@d latest=-0d@d
+| timechart span=1h count(uid)
+
+#internet usage
+index=bro2 sourcetype=bro_conn id_resp_p=443 id_orig_h="$dest_host$" 
+| join id_resp_h 
+    [ search index=bro_ssl sourcetype=bro_ssl 
+    | table id_resp_h server_name ] 
+| eval receive_mb = round((resp_bytes/1024)/1024,3) , send_mb = round((orig_bytes/1024)/1024,3) 
+| rex field=server_name "(?<s_domainname>[^\.\s]+\.[^\.\s]+)$$" 
+| stats sum(send_mb) as usage by s_domainname 
+| sort -usage 
+| head 10
+
+# rare outgoing connection
+
+index=bro2 sourcetype=bro_conn id_resp_p=443 id_orig_h="$dest_host$"
+| iplocation id_resp_h 
+| fillnull value=unknown 
+| stats count by Country 
+| sort  count 
+| where count < 10
+
+
+# internet upload & downloads 
+
+index=bro2 sourcetype=bro_conn id_resp_p=443 id_orig_h="$dest_host$"
+| join id_resp_h 
+    [ search index=bro_ssl sourcetype=bro_ssl 
+    | table id_resp_h server_name ] 
+| eval receive_mb = round((resp_bytes/1024)/1024,3) , send_mb = round((orig_bytes/1024)/1024,3) 
+| rex field=server_name "(?<s_domainname>[^\.\s]+\.[^\.\s]+)$$" 
+| stats sum(receive_mb) as download, sum(send_mb) as upload by s_domainname
+
+
+#upload size od > download size
+index=bro2 sourcetype=bro_conn id_resp_p=443 id_orig_h="$dest_host$" 
+| join id_resp_h 
+    [ search index=bro_ssl sourcetype=bro_ssl 
+    | table id_resp_h server_name ] 
+| eval receive_mb = round((resp_bytes/1024)/1024,3) , send_mb = round((orig_bytes/1024)/1024,3) 
+| rex field=server_name "(?<s_domainname>[^\.\s]+\.[^\.\s]+)$$" 
+| where receive_mb < send_mb 
+| stats sum(send_mb) as usage by s_domainname 
+| sort -usage
+
+
+
+# service wise internet usage
+index="bro2" sourcetype=bro_conn id_orig_h ="$dest_host$" NOT id_resp_h IN(10.0.0.0/24) 
+| eval receive_mb = round((resp_bytes/1024)/1024,3) , send_mb = round((orig_bytes/1024)/1024,3) 
+| stats sum(receive_mb) as download_mb, sum(send_mb) as upload_mb by id_resp_p | sort -download_mb
+
+
+# DNS providers
+
+index="bro_ssl" sourcetype=bro_x509 
+| eval c_time=strftime(certificate_not_valid_after,"%m/%d/%y %H:%M:%S") , issue_date= strftime(certificate_not_valid_before,"%m/%d/%y %H:%M:%S") 
+| eval diff_seconds = now() - certificate_not_valid_before 
+| eval diff_days = round(diff_seconds / 86400,0) 
+| table c_time issue_date diff_days certificate* | where diff_days<30
+
+
+# query type
+index=main sourcetype=bro_dns  NOT dest_ip IN(10.0.0.0/8,f*,224.0.0.25*) 
+| stats count by qtype_name
+
+
+
+#uniaue sub domains
+index=main sourcetype=bro_dns dest_port=53 
+| dedup query 
+| eval query2= mvindex(split(query,"."),-2) +"."+ mvindex(split(query,"."),-1) 
+| stats count by query2 | sort -count
+
+
+# build a viz for bytes sent , bytes recevied, leg of the query, len of answers
+# scatter plot
+
+index=main sourcetype="bro_conn" id_resp_p=53 
+| join uid 
+    [ search index=main sourcetype=bro_dns ] 
+| search qtype_name=A 
+| table resp_bytes orig_bytes uid id_orig_h id_orig_p id_resp_h id_resp_p query qtype_name ans*
+
+
+
+
+# new born certificate <20 days
+
+index="bro_ssl" sourcetype=bro_x509 
+| eval c_time=strftime(certificate_not_valid_after,"%m/%d/%y %H:%M:%S") , issue_date= strftime(certificate_not_valid_before,"%m/%d/%y %H:%M:%S") 
+| eval diff_seconds = now() - certificate_not_valid_before 
+| eval diff_days = round(diff_seconds / 86400,0) 
+| search diff_days<20 
+| stats count
+
+
+# risky tls certificates
+
+index=bro_ssl sourcetype=bro_ssl validation_status IN ("self signed certificate in certificate chain","self signed certificate","certificate has expired") 
+| dedup server_name 
+| iplocation dest_ip 
+| stats count by validation_status
+
+
+# risky tls with geo
+
+index=bro_ssl sourcetype=bro_ssl validation_status IN ("self signed certificate in certificate chain","self signed certificate","certificate has expired") 
+| dedup server_name 
+| iplocation dest_ip 
+| geostats count by  Country
+
+
+# self signed tls
+index=bro_ssl sourcetype=bro_ssl validation_status="self signed certificate" 
+| dedup server_name 
+| iplocation dest_ip 
+| table dest_ip server_name CN issuer Country
+
+
+#riksy tls certs
+
+index=bro_ssl sourcetype=bro_ssl validation_status IN ("self signed certificate in certificate chain","self signed certificate","certificate has expired") 
+| dedup server_name 
+| iplocation dest_ip 
+| table validation_status dest_ip server_name CN issuer Country
+
+
+# cert recently created 
+
+index="bro_ssl" sourcetype=bro_x509 
+| eval c_time=strftime(certificate_not_valid_after,"%m/%d/%y %H:%M:%S") , issue_date= strftime(certificate_not_valid_before,"%m/%d/%y %H:%M:%S") 
+| eval diff_seconds = now() - certificate_not_valid_before 
+| eval diff_days = round(diff_seconds / 86400,0) 
+| table c_time issue_date diff_days certificate* | where diff_days<30
+
+
+
+#types of browsers
+index=main sourcetype=bro_software  unparsed_version= Mozilla* 
+| dedup unparsed_version 
+| table extracted_host name software_type unparsed_version | stats count by name | sort -count
+
+
+# types of endpoints
+
+index=bro_dhcp sourcetype=bro_dhcp earliest=-100d@d latest=now()
+| dedup mac 
+| eval mac_code = upper(substr(replace(mac, ":",""),1,6)) 
+| lookup mac_to_user.csv mac OUTPUT emp 
+| lookup ouiv2.csv code as mac_code OUTPUT companyName 
+| fillnull value=unknown 
+| stats count by companyName
+
+
+
+# new machines
+
+index=bro_dhcp sourcetype=bro_dhcp 
+| dedup mac 
+| lookup mac_to_user.csv mac OUTPUT emp 
+| fillnull value=unknown 
+| search emp=unknown 
+| stats count
+
+
+# host history
+index=bro_dhcp sourcetype=bro_dhcp 
+| dedup mac 
+| eval mac_code = upper(substr(replace(mac, ":",""),1,6)) | eval host_name = lower(host_name)
+| lookup mac_to_user.csv mac OUTPUT emp 
+| lookup ouiv2.csv code as mac_code OUTPUT companyName 
+| fillnull value=unknown 
+| table mac companyName client_addr host_name emp
+
+
