@@ -7,3 +7,11 @@ index=linux_audit
 | stats count, avg(latency), min(latency), max(latency) by source
 
 
+# check for the search excution time 
+
+index=_audit action=search info=completed 
+| table search exec_time event_count total_run_time result_count
+
+| history 
+| table event_count exec_time result_count search stats total_run_time
+
