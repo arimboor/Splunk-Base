@@ -1,24 +1,48 @@
- # UF configuration for linux + osquery audit logs
+# installation
+
+dpkg -i splink***.deb
+
+./splunk start --accept-license
+./splunk add licenses lic.xml 
+./splunk enable web-ssl
+
+=================================
+
+# run splunk after booting 
+
+./splunk enable boot-start 
+OR
+./splunk enable boot-start -user jintoa
+OR 
+./splunk enable boot-start -systemd-managed 1 
+
+==============================================
+
+# UF configuration for linux + osquery audit logs
  
 ./splunk add forward-server 192.168.0.1:9997
-
 ./splunk add monitor /var/log/audit/audit.log -index linux_audit
-
 ./splunk add monitor /var/log/kolide/osquery_result -index osquery_kolide -sourcetype osquery
-
 ./splunk add monitor /var/log/osquery/osqueryd.results.log -index linux_osquery_r
-
 ./splunk add monitor /var/log/osquery/osqueryd.snapshots.log -index linux_osquery
-
-
 
 # to delete 
 
 ./splunk remove forward-server 192.168.0.1:9997
-
 ./splunk remove   monitor /var/log/audit/audit.log -index linux_audit
 
+# to list the forwarders 
 
 ./splunk list forward-server
-
 ./splunk list monitor
+
+=====================================================
+
+#To permanently remove data from all indexes
+
+./splunk clean eventdata
+
+#To permanently remove data from a single index
+
+./splunk clean eventdata -index <index_name>
+./splunk clean eventdata -index _internal -f
