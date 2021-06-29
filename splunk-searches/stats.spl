@@ -1,3 +1,10 @@
 | stats count(eval(match(sender_domain, "[^\n\r\s]+\.com"))) AS ".com",
 
 | stats count(eval(NOT match(sender_domain, "[^\n\r\s]+\.(com|net|org)"))) AS "other"
+
+
+
+## simple moving average (SMA)
+## weighted moving average (WMA)
+## exponential moving average (EMA)
+
