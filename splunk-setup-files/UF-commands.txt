@@ -1,0 +1,24 @@
+ # UF configuration for linux + osquery audit logs
+ 
+./splunk add forward-server 192.168.0.1:9997
+
+./splunk add monitor /var/log/audit/audit.log -index linux_audit
+
+./splunk add monitor /var/log/kolide/osquery_result -index osquery_kolide -sourcetype osquery
+
+./splunk add monitor /var/log/osquery/osqueryd.results.log -index linux_osquery_r
+
+./splunk add monitor /var/log/osquery/osqueryd.snapshots.log -index linux_osquery
+
+
+
+# to delete 
+
+./splunk remove forward-server 192.168.0.1:9997
+
+./splunk remove   monitor /var/log/audit/audit.log -index linux_audit
+
+
+./splunk list forward-server
+
+./splunk list monitor

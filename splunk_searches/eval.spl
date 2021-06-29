@@ -1,0 +1,11 @@
+| eval a = split(col,":")
+
+| eval a = mvindex(col,0) / mvindex(col,-1)
+
+| eval human_readable_time=strftime(_time, "%Y-%d-%m %H:%M") 
+
+| eval bounces = if(sender like "%bounce%","bounces","normal")
+
+| eval Status=if(like(_raw, "%connected%"), "if condition is correct then value, "else what is the value")
+
+| eval hostgroup=case(host LIKE "%BE%", "BE", host LIKE "%MT%", "MT", host LIKE "%FE%", "FE", host LIKE "%", "Others") 
