@@ -1,0 +1,9 @@
+# check the delay in log sending 
+
+index=linux_audit 
+| eval time=_time 
+| eval itime=_indextime 
+| eval latency=(itime - time) 
+| stats count, avg(latency), min(latency), max(latency) by source
+
+
