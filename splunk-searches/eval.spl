@@ -4,6 +4,9 @@
 
 | eval human_readable_time=strftime(_time, "%Y-%d-%m %H:%M") 
 
+LIKE
+======
+
 | eval bounces = if(sender like "%bounce%","bounces","normal")
 
 | eval Status=if(like(_raw, "%connected%"), "if condition is correct then value, "else what is the value")
