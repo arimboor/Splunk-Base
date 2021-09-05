@@ -1,0 +1,15 @@
+tsidx (time series index) files are created as part of the indexing pipeline processing. The incoming data is parsed into terms (think 'words' delimited by certain characters) and this list of terms is then stored along with offset (a number) that represents the location in the rawdata file (journal.gz) that the event data is written to.
+It is the exact same thing as an index in a book, except it is a complete index rather than a subset. If every word in a book would be in the index, the index would be way larger than the book itself, which is exactly what happens in Splunk. If you look at an index bucket directory on disk, you will find that the size for the index and other metadata files often exceeds the size of the compressed raw data.
+
+Searches using tstats only use the tsidx files, i.e. Splunk does not have to read, unzip and search the journal.gz files to create the search results, which is obviously orders of magnitudes faster.
+
+Try it for yourself! The following two searches are semantically identical and should return the same exact results on your Splunk instance. Pick "Previous week" from the timerange picker and then take a look at how long they each take in Job Inspector once they are complete.
+
+index=_internal  | stats count by sourcetype
+Equivalent tstats search:
+
+| tstats count where index=_internal by sourcetype 
+
+the first one takes 115s, the tstats search completes in 4s.
+
+Note that this only works for indexed fields, not for fields extracted at search time. By default that is _time, source, host and sourcetype.
