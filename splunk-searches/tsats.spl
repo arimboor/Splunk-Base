@@ -12,4 +12,4 @@ Equivalent tstats search:
 
 the first one takes 115s, the tstats search completes in 4s.
 
-Note that this only works for indexed fields, not for fields extracted at search time. By default that is _time, source, host and sourcetype.
+Note :that this only works for indexed fields, not for fields extracted at search time. By default that is _time, source, host and sourcetype.
