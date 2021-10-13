@@ -1,0 +1,6 @@
+rotate splunk hot buckets before coping the indexed data folder to another splunk indxer 
+
+./splunk _internal call /data/indexes/bro_index_1/roll-hot-buckets –auth 
+
+scp -r db_1632139155_1632136304_85 root@10.10.22.213:/home/platform/opt/splunk_install/splunk/var/lib/splunk/bro_index_1/db
+
