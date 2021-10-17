@@ -1,6 +1,59 @@
+# installation
+
+dpkg -i splink***.deb
+
+./splunk start --accept-license
+./splunk add licenses lic.xml 
+./splunk enable web-ssl
+
+=================================
+
+# run splunk after booting 
+
+./splunk enable boot-start 
+OR
+./splunk enable boot-start -user jintoa
+OR 
+./splunk enable boot-start -systemd-managed 1 
+
+==============================================
+
+# UF configuration for linux + osquery audit logs
+ 
+./splunk add forward-server 192.168.0.1:9997
+./splunk add monitor /var/log/audit/audit.log -index linux_audit
+./splunk add monitor /var/log/kolide/osquery_result -index osquery_kolide -sourcetype osquery
+./splunk add monitor /var/log/osquery/osqueryd.results.log -index linux_osquery_r
+./splunk add monitor /var/log/osquery/osqueryd.snapshots.log -index linux_osquery
+
+# to delete 
+
+./splunk remove forward-server 192.168.0.1:9997
+./splunk remove   monitor /var/log/audit/audit.log -index linux_audit
+
+# to list the forwarders 
+
+./splunk list forward-server
+./splunk list monitor
+
+=====================================================
+
+#To permanently remove data from all indexes
+
+./splunk clean eventdata
+
+#To permanently remove data from a single index
+
+./splunk clean eventdata -index <index_name>
+./splunk clean eventdata -index _internal -f
+
+=========
+
+
+
 rotate splunk hot buckets before coping the indexed data folder to another splunk indxer 
 
 ./splunk _internal call /data/indexes/bro_index_1/roll-hot-buckets –auth 
 
-scp -r db_1632139155_1632136304_85 root@10.10.22.213:/home/platform/opt/splunk_install/splunk/var/lib/splunk/bro_index_1/db
+scp -r db_1xxxxx_16xxxxx_xx root@x.x.x.x:/home/opt/splunk/var/lib/splunk/bro_xxxx/db
 
